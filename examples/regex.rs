@@ -28,10 +28,8 @@ pub struct IfcCartesianPoint {
 }
 
 impl IfcCartesianPoint {
-    fn parse(s: &str) -> Result<Self, ParseError> {
-        let cartesian_point_re =
-            Regex::new(r"#(\d+)=IFCCARTESIANPOINT\(\(([\d\.,\-]+)\)\);").unwrap();
-        if let Some(captures) = cartesian_point_re.captures(&s) {
+    fn parse(s: &str, regex: &Regex) -> Result<Self, ParseError> {
+        if let Some(captures) = regex.captures(&s) {
             let id = captures.get(1).unwrap().as_str().to_string();
             let coordinates: Vec<f64> = captures
                 .get(2)
@@ -65,9 +63,12 @@ fn parse(file_path: &str) -> Vec<IfcCartesianPoint> {
     let contents: String = std::fs::read_to_string(file_path).expect("File path not available.");
     let lines: Vec<&str> = contents.split("\n").collect();
 
+    let cartesian_point_re =
+    Regex::new(r"#(\d+)=IFCCARTESIANPOINT\(\(([\d\.,\-]+)\)\);").unwrap();
+
     for line in lines.iter() {
         if line.contains("=IFCCARTESIANPOINT(") {
-            match IfcCartesianPoint::parse(line) {
+            match IfcCartesianPoint::parse(line, &cartesian_point_re) {
                 Ok(point) => {
                     points.push(point);
                 }
@@ -86,7 +87,7 @@ fn main() {
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap();
     eprintln!("{:?}", start);
-    let points = parse("assets/ifc2x3/clinic.ifc");
+    let points = parse("assets/ifc2x3/duplex.ifc");
     eprintln!("{:?}", points.len());
     let end = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
