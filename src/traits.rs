@@ -14,46 +14,21 @@
 // along with IfcOpenShell-Rust. If not, see <https://www.gnu.org/licenses/>.
 //
 // =============================================================================
-use regex::Regex;
-use std::collections::HashMap;
+use super::*;
 
-mod data;
-use data::*;
+pub trait IfcEntity {
+    fn from_str(s: &str, regex: &Regex) -> Result<Self, ()>
+    where
+        Self: Sized;
 
-mod traits;
-use traits::*;
+    fn to_string(&self) -> String;
 
-mod model;
-use model::*;
+    fn id(&self) -> usize;
+}
 
-pub struct IfcParser;
-
-pub fn from_file(path: &str) -> Result<Model, ()> {
-    let file = match std::fs::read_to_string(path) {
-        Ok(file) => file,
-        Err(_) => {
-            log::error!("Unable to open file");
-            return Err(());
-        }
-    };
-
-    let data = file.split("ENDSEC;").collect::<Vec<&str>>();
-
-    let mut data = data[1].split(";\n").collect::<Vec<&str>>();
-    data.remove(0);
-
-    let mut model = Model::default();
-
-    for value in data {
-        match model.parse_data(value) {
-            Ok(entity) => {
-                model.add_data(entity.id(), entity);
-            }
-            Err(_e) => {
-                log::warn!("Error parsing line");
-            }
-        }
+use core::fmt::Debug;
+impl Debug for dyn IfcEntity {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}", self.to_string())
     }
-
-    Ok(model)
 }
