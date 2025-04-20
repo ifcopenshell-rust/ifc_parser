@@ -21,7 +21,7 @@ pub struct IfcParser;
 
 pub struct Model {
     data: HashMap<usize, Box<dyn IfcEntity>>,
-    regex_map: HashMap<String, Regex>,
+    regex_map: HashMap<&'static str, Regex>,
 }
 
 impl Default for Model {
@@ -33,7 +33,10 @@ impl Default for Model {
 
         model
             .regex_map
-            .insert("IFCCARTESIANPOINT".to_string(), Regex::new(r"#(\d+)=IFCCARTESIANPOINT\(\(([\d\.,\-]+)\)\)").unwrap());
+            .insert("IFCCARTESIANPOINT", Regex::new(r"#(\d+)=IFCCARTESIANPOINT\(\(([\d\.,\-]+)\)\)").unwrap());
+
+        model.regex_map.insert("IFCDIRECTION", Regex::new(r"#(\d+)=IFCDIRECTION\(\(([\d\.,\-]+)\)\)").unwrap());
+
         model
     }
 }
@@ -42,9 +45,20 @@ impl Model {
     pub fn parse_data(&mut self, s: &str) -> Result<Box<dyn IfcEntity>, ()> {
         if s.contains("=IFCCARTESIANPOINT(") {
             match IfcCartesianPoint::from_str(s, self.regex_map.get("IFCCARTESIANPOINT").unwrap()) {
-                Ok(point) => {
-                    log::info!("Parsed point: {:?}", point);
-                    return Ok(Box::new(point));
+                Ok(data) => {
+                    log::debug!("Parsed data: {:?}", data);
+                    return Ok(Box::new(data));
+                }
+                Err(_e) => {
+                    log::warn!("Error parsing line");
+                    return Err(());
+                }
+            }
+        } else if s.contains("=IFCDIRECTION(") {
+            match IfcDirection::from_str(s, self.regex_map.get("IFCDIRECTION").unwrap()) {
+                Ok(data) => {
+                    log::debug!("Parsed data: {:?}", data);
+                    return Ok(Box::new(data));
                 }
                 Err(_e) => {
                     log::warn!("Error parsing line");

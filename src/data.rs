@@ -61,3 +61,49 @@ impl IfcEntity for IfcCartesianPoint {
         self.id
     }
 }
+
+#[derive(Debug)]
+pub struct IfcDirection {
+    id: usize,
+    x: f32,
+    y: f32,
+    z: Option<f32>,
+}
+
+impl IfcEntity for IfcDirection {
+    fn from_str(s: &str, regex: &Regex) -> Result<Self, ()> {
+        if let Some(captures) = regex.captures(&s) {
+            let id = captures.get(1).unwrap().as_str().to_string();
+            let coordinates: Vec<f32> = captures.get(2).unwrap().as_str().split(',').map(|s| s.parse::<f32>().unwrap()).collect();
+            if coordinates.len() == 3 {
+                return Ok(IfcDirection {
+                    id: id.parse().unwrap(),
+                    x: coordinates[0],
+                    y: coordinates[1],
+                    z: Some(coordinates[2]),
+                });
+            } else {
+                return Ok(IfcDirection {
+                    id: id.parse().unwrap(),
+                    x: coordinates[0],
+                    y: coordinates[1],
+                    z: None,
+                });
+            }
+        } else {
+            Err(())
+        }
+    }
+
+    fn to_string(&self) -> String {
+        if let Some(z) = self.z {
+            return format!("IFCDIRECTION({},{},{})", self.x, self.y, z);
+        } else {
+            return format!("IFCDIRECTION({},{})", self.x, self.y);
+        }
+    }
+
+    fn id(&self) -> usize {
+        self.id
+    }
+}

@@ -17,6 +17,6 @@
 fn main() {
     env_logger::init();
     let model = ifc_parser::from_file("assets/ifc2x3/clinic.ifc").unwrap();
-    let data = model.by_id(&91).unwrap();
+    let data = model.by_id(&3).unwrap();
     eprintln!("{:?}", data);
 }
